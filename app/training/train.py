@@ -50,7 +50,7 @@ def train(model, train_dataloader, val_dataloader, train_evaluator, val_evaluato
               epochs=num_epochs,
               evaluation_steps=evaluation_steps_,
               scheduler=scheduler_,
-              warmup_steps=int(len(train_dataloader) * num_epochs * 0.01),
+              warmup_steps=int(len(train_dataloader) * num_epochs * 0.01),   # total_training_steps = num_epoch * len(train_dataloader)
               # warmup_steps= 0,
               output_path=save_model_path,
               batch_size=batch_size_,
@@ -68,10 +68,14 @@ def train(model, train_dataloader, val_dataloader, train_evaluator, val_evaluato
 if __name__ == '__main__':
     # Hyper parameters
     MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    train_data_length = 180000
-    val_data_length = 10000
-    batch_size = 64
-    epochs = 8
+
+    # MODEL_NAME = 'cross-encoder/stsb-roberta-large'
+    # MODEL_NAME = 'cross-encoder/ms-marco-MiniLM-L-12-v2'
+    # MODEL_NAME = 'recobo/chemical-bert-uncased-pharmaceutical-chemical-classifier'
+    # MODEL_NAME = 'dmis-lab/biobert-v1.1'
+    # MODEL_NAME = 'emilyalsentzer/Bio_ClinicalBERT'
+    # MODEL_NAME = 'medicalai/ClinicalBERT'
+
     activation_function = nn.Identity()
     # activation_function =  nn.Sigmoid()
     # loss = nn.CrossEntropyLoss()
@@ -80,15 +84,23 @@ if __name__ == '__main__':
     base_model_name = 'miniLM_L6'
     scheduler = 'warmuplinear'  # 'warmuplinear' ,   'constantlr' , 'warmupcosine' , 'warmupcosinewithhardrestarts'  , 'warmupconstant'
 
+
     print('----- Data Loading -------')
     HOME_DIR = '/home/ubuntu'
-    file_name = 'df_prod_phonetic_mix_v2.csv'
+    file_name = 'exp3_d5_416k.csv'
     df = pd.read_csv(HOME_DIR + '/data/' + file_name).sample(frac=1, random_state=42).dropna().drop_duplicates()
+
     print(f'---Length of Data = {len(df)}----')
+    val_data_length = 5000
+    train_data_length = len(df) - val_data_length
+    print(f'train length = {train_data_length}, val lenth = {val_data_length}')
+    batch_size = 64
+    epochs = 8
     train_data = df[:train_data_length]
     val_data = df[-val_data_length:]
 
-    final_path = f'miniLM_L6_{file_name[:-4]}_{int(train_data_length // 1000)}k'
+    # final_path = f'iter2_miniLM_L6_{file_name[:-4]}_{int(train_data_length // 1000)}k'
+    final_path = f'iter8_miniLM_L6_{file_name[:-4]}'
     save_model_path = f'/home/ubuntu/checkpoints/models_checkpoints/entity_search/reranking_models/' + f"crossencoder_models/" + final_path
     train_dataloader, train_sample = give_data_loader(train_data, batch_size_=batch_size, size_=train_data_length)
     val_dataloader, val_sample = give_data_loader(val_data, batch_size_=batch_size, size_=val_data_length)
